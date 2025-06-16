@@ -1,3 +1,3 @@
-FROM ghcr.io/e-kotov/spanishoddata-playground:4.4.1
+FROM ghcr.io/e-kotov/spanishoddata-playground:latest
 
 COPY --chown=${NB_USER} . ${HOME}
