@@ -1,3 +1,5 @@
+# learn more at https://ropenspain.github.io/spanishoddata/
+
 library(spanishoddata)
 spod_set_data_dir("data")
 library(flowmapper)
