@@ -1,5 +1,5 @@
 # learn more at https://ropenspain.github.io/spanishoddata/
-
+# check package version with packageVersion("spanishoddata")
 library(spanishoddata)
 spod_set_data_dir("data")
 library(flowmapper)
