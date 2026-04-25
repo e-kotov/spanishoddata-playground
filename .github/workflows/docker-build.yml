@@ -1,0 +1,100 @@
+name: Build and Push Docker Image
+
+on:
+  schedule:
+    - cron: '0 0 * * 0' # Every Sunday at midnight
+  workflow_dispatch:
+    inputs:
+      force:
+        description: 'Force build even if release is new or image already exists'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: e-kotov/spanishoddata-playground
+
+jobs:
+  check-and-build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check latest release of spanishoddata
+        id: check_release
+        run: |
+          FORCE_BUILD="${{ github.event.inputs.force }}"
+          
+          # Fetch latest release from GitHub API
+          LATEST_RELEASE=$(curl -s https://api.github.com/repos/rOpenSpain/spanishoddata/releases/latest)
+          TAG_NAME=$(echo "$LATEST_RELEASE" | jq -r .tag_name)
+          PUBLISHED_AT=$(echo "$LATEST_RELEASE" | jq -r .published_at)
+          
+          if [ "$TAG_NAME" == "null" ] || [ -z "$TAG_NAME" ]; then
+            echo "Error: Could not fetch latest release tag."
+            exit 1
+          fi
+
+          echo "Latest release: $TAG_NAME published at $PUBLISHED_AT"
+          
+          # Calculate age in days
+          PUB_SEC=$(date -d "$PUBLISHED_AT" +%s)
+          NOW_SEC=$(date +%s)
+          AGE_DAYS=$(( (NOW_SEC - PUB_SEC) / 86400 ))
+          
+          echo "Release age: $AGE_DAYS days"
+          
+          BUILD_REQUIRED="true"
+          
+          if [ "$FORCE_BUILD" == "true" ]; then
+            echo "Force build requested. Bypassing checks."
+          else
+            # 1. Check age (minimum 3 days for CRAN binaries)
+            if [ "$AGE_DAYS" -lt 3 ]; then
+              echo "Release is less than 3 days old ($AGE_DAYS days). Skipping build."
+              BUILD_REQUIRED="false"
+            fi
+            
+            # 2. Check if image with this tag already exists
+            if [ "$BUILD_REQUIRED" == "true" ]; then
+              if docker manifest inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:$TAG_NAME >/dev/null 2>&1; then
+                echo "Image for $TAG_NAME already exists in registry. Skipping build."
+                BUILD_REQUIRED="false"
+              else
+                echo "Image for $TAG_NAME does not exist. Proceeding with build."
+              fi
+            fi
+          fi
+          
+          echo "build_required=$BUILD_REQUIRED" >> $GITHUB_OUTPUT
+          echo "tag=$TAG_NAME" >> $GITHUB_OUTPUT
+
+      - name: Checkout repository
+        if: steps.check_release.outputs.build_required == 'true'
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        if: steps.check_release.outputs.build_required == 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push Docker image
+        if: steps.check_release.outputs.build_required == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerbuild/Dockerfile
+          push: true
+          # Note: tags must be all lowercase for Docker
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.check_release.outputs.tag }}
