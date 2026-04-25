@@ -3,6 +3,9 @@ FROM ghcr.io/rocker-org/binder:latest
 # become root so apt-get works
 USER root
 
+# Remove the problematic r2u repository if it exists to prevent apt-get update failures
+RUN rm -f /etc/apt/sources.list.d/r2u.list || true
+
 # install system tools
 RUN apt-get update \
  && apt-get install -y --no-install-recommends software-properties-common \
@@ -10,17 +13,16 @@ RUN apt-get update \
  && apt-get update \
  && apt-get install -y --no-install-recommends \
       gh git htop mc micro nano \
+      libxml2-dev libssl-dev libcurl4-openssl-dev libsf-dev libudunits2-dev \
+      libgdal-dev libproj-dev libsqlite3-dev \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
 # drop back to notebook user (optional but recommended)
 USER $NB_USER
 
-# install R packages
-RUN install2.r --error --skipinstalled --ncpus -4 \
-     flowmapper flowmapblue mapgl mapSpain hexSticker duckdb sf remotes \
-     httr2 parallelly memuse xml2 here curl quarto spanishoddata \
-     scales furrr future future.mirai tidyverse
+# install R packages from Posit Package Manager binaries
+RUN R -e "options(repos = c(CRAN = 'https://packagemanager.posit.co/cran/__linux__/noble/latest')); install.packages(c('flowmapper', 'flowmapblue', 'mapgl', 'mapSpain', 'hexSticker', 'duckdb', 'sf', 'remotes', 'httr2', 'parallelly', 'memuse', 'xml2', 'here', 'curl', 'quarto', 'spanishoddata', 'scales', 'furrr', 'future', 'future.mirai', 'tidyverse'))"
 
 # set environment
 RUN echo 'SPANISH_OD_DATA_DIR=~/mitms' >> ~/.Renviron
