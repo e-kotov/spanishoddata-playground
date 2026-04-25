@@ -13,7 +13,7 @@ RUN apt-get update \
  && apt-get update \
  && apt-get install -y --no-install-recommends \
       gh git htop mc micro nano \
-      libxml2-dev libssl-dev libcurl4-openssl-dev libsf-dev libudunits2-dev \
+      libxml2-dev libssl-dev libcurl4-openssl-dev libudunits2-dev \
       libgdal-dev libproj-dev libsqlite3-dev \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
