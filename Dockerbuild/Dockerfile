@@ -1,4 +1,4 @@
-FROM ghcr.io/rocker-org/binder:latest
+FROM ghcr.io/rocker-org/binder:4.4.2
 
 # become root so apt-get works
 USER root
