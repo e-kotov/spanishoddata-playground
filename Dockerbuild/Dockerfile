@@ -18,11 +18,11 @@ RUN apt-get update \
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
 
-# drop back to notebook user (optional but recommended)
-USER $NB_USER
-
 # install R packages from Posit Package Manager binaries
 RUN R -e "options(repos = c(CRAN = 'https://packagemanager.posit.co/cran/__linux__/noble/latest')); update.packages(ask = FALSE, checkBuilt = TRUE); install.packages(c('flowmapper', 'flowmapblue', 'mapgl', 'mapSpain', 'hexSticker', 'duckdb', 'sf', 'remotes', 'httr2', 'parallelly', 'memuse', 'xml2', 'here', 'curl', 'quarto', 'spanishoddata', 'scales', 'furrr', 'future', 'future.mirai', 'tidyverse'))"
+
+# drop back to notebook user (optional but recommended)
+USER $NB_USER
 
 # set environment
 RUN echo 'SPANISH_OD_DATA_DIR=~/mitms' >> ~/.Renviron
