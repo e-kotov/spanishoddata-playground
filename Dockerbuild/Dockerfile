@@ -7,7 +7,8 @@ USER root
 RUN rm -f /etc/apt/sources.list.d/r2u.list || true
 
 # install system tools
-RUN apt-get update \
+RUN apt-mark hold r-base-core r-base-dev r-base r-recommended r-base-html \
+ && apt-get update \
  && apt-get install -y --no-install-recommends software-properties-common \
  && add-apt-repository universe \
  && apt-get update \
