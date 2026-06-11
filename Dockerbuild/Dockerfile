@@ -7,8 +7,7 @@ USER root
 RUN rm -f /etc/apt/sources.list.d/r2u.list || true
 
 # install system tools
-RUN apt-mark hold r-base-core r-base-dev r-base r-recommended r-base-html \
- && apt-get update \
+RUN apt-get update \
  && apt-get install -y --no-install-recommends software-properties-common \
  && add-apt-repository universe \
  && apt-get update \
@@ -23,7 +22,7 @@ RUN apt-mark hold r-base-core r-base-dev r-base r-recommended r-base-html \
 USER $NB_USER
 
 # install R packages from Posit Package Manager binaries
-RUN R -e "options(repos = c(CRAN = 'https://packagemanager.posit.co/cran/__linux__/noble/latest')); install.packages(c('flowmapper', 'flowmapblue', 'mapgl', 'mapSpain', 'hexSticker', 'duckdb', 'sf', 'remotes', 'httr2', 'parallelly', 'memuse', 'xml2', 'here', 'curl', 'quarto', 'spanishoddata', 'scales', 'furrr', 'future', 'future.mirai', 'tidyverse'))"
+RUN R -e "options(repos = c(CRAN = 'https://packagemanager.posit.co/cran/__linux__/noble/latest')); update.packages(ask = FALSE, checkBuilt = TRUE); install.packages(c('flowmapper', 'flowmapblue', 'mapgl', 'mapSpain', 'hexSticker', 'duckdb', 'sf', 'remotes', 'httr2', 'parallelly', 'memuse', 'xml2', 'here', 'curl', 'quarto', 'spanishoddata', 'scales', 'furrr', 'future', 'future.mirai', 'tidyverse'))"
 
 # set environment
 RUN echo 'SPANISH_OD_DATA_DIR=~/mitms' >> ~/.Renviron
